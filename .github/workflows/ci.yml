@@ -8,6 +8,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      TELEGRAM_BOT_TOKEN: "ci-test-token"
+      TELEGRAM_CHAT_ID: "1"
     steps:
       - uses: actions/checkout@v4
       - name: Setup Python
