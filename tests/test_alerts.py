@@ -1,6 +1,5 @@
 import os
 import asyncio
-import importlib
 from unittest.mock import patch, MagicMock
 
 
@@ -30,7 +29,6 @@ def test_send_telegram_alert_success(monkeypatch):
 
 def test_check_binance_alert_triggers(monkeypatch):
     setup_env()
-    import config
     import alerts
     import time
 
