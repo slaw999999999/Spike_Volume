@@ -140,7 +140,7 @@ Przykładowe zrzuty ekranu z działającej aplikacji (pliki znajdują się w kat
 
   ![GUI screenshot](assets/gui.PNG)
 
-- Przykładowy alert Telegram:
+- Przykładowe alerty Telegram:
 
   ![Telegram alert screenshot](assets/telegram_alerts.png)
 
