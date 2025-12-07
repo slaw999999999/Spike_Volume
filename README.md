@@ -1,5 +1,8 @@
 # Spike Volume Monitor
 
+![python](https://img.shields.io/badge/python-3.14-blue.svg)
+![license](https://img.shields.io/badge/license-MIT-green.svg)
+
 Narzędzie do monitorowania wolumenów i delt na wielu giełdach kryptowalut z systemem alertów na Telegram.
 
 ## Cechy
@@ -29,6 +32,33 @@ python -m venv .venv
 # Zainstaluj zależności
 pip install -r requirements.txt
 ```
+
+## Quick Start
+
+1. Skopiuj szablon `.env` i uzupełnij wartości:
+
+```powershell
+Copy-Item .env.example .env
+# Otwórz .env i wklej TELEGRAM_BOT_TOKEN oraz TELEGRAM_CHAT_ID
+```
+
+2. Aktywuj virtualenv i zainstaluj zależności (Windows PowerShell):
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+```
+
+3. Uruchom aplikację:
+
+```bash
+python main.py
+```
+
+Po uruchomieniu powinno pojawić się okno GUI. Zaznacz coiny w panelu "Wybierz Coiny do Wyświetlania", żeby rozpocząć monitorowanie. Alerty na Telegram będą wysyłane automatycznie przy spełnieniu warunków (jeśli `.env` zawiera poprawne dane).
+
+Jeśli wolisz uruchomić projekt w kontenerze, mogę przygotować `Dockerfile` i `docker-compose` na życzenie.
+
 
 ## Konfiguracja
 
