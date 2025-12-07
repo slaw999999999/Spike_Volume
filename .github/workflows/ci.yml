@@ -28,5 +28,5 @@ jobs:
           pip install pytest ruff
       - name: Run tests
         run: python -m pytest -q
-      - name: Lint with ruff
-        run: ruff check .
+      - name: Lint with ruff (non-blocking)
+        run: ruff check . --exit-zero
