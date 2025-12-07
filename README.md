@@ -132,6 +132,18 @@ Dla każdego coina i giełdy:
 - GUI można minimalizować - aplikacja działa dalej
 - Ctrl+C zamyka aplikację
 
+## Screenshots
+
+Przykładowe zrzuty ekranu z działającej aplikacji (pliki znajdują się w katalogu `assets/`).
+
+- GUI aplikacji (tabela i panel wyboru coinów):
+
+  ![GUI screenshot](assets/gui.PNG)
+
+- Przykładowy alert Telegram:
+
+  ![Telegram alert screenshot](assets/telegram_alerts.png)
+
 ## Troubleshooting
 
 **"Brak konfiguracji Telegram"**
