@@ -51,6 +51,20 @@ class CryptoMonitorGUI:
         style.configure("Header.TLabel", font=('Segoe UI', 10, 'bold'), foreground=self.accent_color, background=self.bg_color)
         style.configure("Title.TLabel", font=('Segoe UI', 14, 'bold'), foreground=self.accent_color, background=self.bg_color)
 
+        # Treeview style for dark theme
+        style.configure("Custom.Treeview",
+                background=self.bg_color,
+                fieldbackground=self.bg_color,
+                foreground=self.fg_color,
+                rowheight=22,
+                font=('Segoe UI', 9))
+        style.configure("Custom.Treeview.Heading",
+                background=self.accent_color,
+                foreground="#ffffff",
+                font=('Segoe UI', 10, 'bold'))
+        style.map("Custom.Treeview.Heading",
+              background=[('active', self.accent_color)])
+
         # Główny kontener
         main_frame = ttk.Frame(root)
         main_frame.pack(fill='both', expand=True, padx=12, pady=12)
@@ -90,74 +104,69 @@ class CryptoMonitorGUI:
         ttk.Button(button_frame, text="❌ Żadne",
                   command=self.deselect_all_coins).pack(side='left', padx=5)
 
-        # Kontener z przewijaniem dla danych
-        data_frame = ttk.Frame(main_frame)
-        data_frame.pack(fill='both', expand=True)
+        # Kontener z tabelą danych - używamy ttk.Treeview żeby kolumny były idealnie wyrównane
+        table_frame = ttk.Frame(main_frame)
+        table_frame.pack(fill='both', expand=True)
 
-        # Canvas i Scrollbar
-        self.canvas = tk.Canvas(data_frame, bg=self.bg_color, highlightthickness=0)
-        scrollbar = ttk.Scrollbar(data_frame, orient="vertical", command=self.canvas.yview)
-        self.scrollable_frame = ttk.Frame(self.canvas)
+        cols = ('coin', 'exchange', 'volume', 'avg', 'delta', 'delta_pct')
+        self.tree = ttk.Treeview(table_frame, columns=cols, show='headings', style='Custom.Treeview', selectmode='none')
 
-        self.scrollable_frame.bind(
-            "<Configure>",
-            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-        )
+        # Nagłówki i format kolumn
+        self.tree.heading('coin', text='💰 Coin', anchor='center')
+        self.tree.column('coin', anchor='center', width=120, stretch=False)
 
-        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
-        self.canvas.configure(yscrollcommand=scrollbar.set)
+        self.tree.heading('exchange', text='🏦 Exchange', anchor='center')
+        self.tree.column('exchange', anchor='center', width=140, stretch=False)
 
-        self.canvas.pack(side="left", fill="both", expand=True)
-        scrollbar.pack(side="right", fill="y")
+        self.tree.heading('volume', text='📊 Volume', anchor='center')
+        self.tree.column('volume', anchor='center', width=120, stretch=False)
 
-        # Nagłówki kolumn - styl tabeli z wyrównaniem
-        headers_frame = ttk.Frame(self.scrollable_frame)
-        headers_frame.pack(fill='x', pady=5, padx=5)
-        
-        # Tło nagłówków
-        headers_bg = tk.Frame(headers_frame, bg=self.accent_color, height=30)
-        headers_bg.pack(fill='x', pady=0)
+        self.tree.heading('avg', text='📈 Avg Vol', anchor='center')
+        self.tree.column('avg', anchor='center', width=120, stretch=False)
 
-        columns = [("💰 Coin", 8, 'w'), ("🏦 Exchange", 12, 'w'), 
-                  ("📊 Volume", 10, 'e'), ("📈 Avg Vol", 10, 'e'), 
-                  ("Δ Delta", 10, 'e'), ("Δ %", 10, 'e')]
-        
-        for i, (header, width, anchor) in enumerate(columns):
-            label = tk.Label(headers_bg, text=header, bg=self.accent_color, fg="#ffffff",
-                           font=('Segoe UI', 10, 'bold'), padx=8, pady=8, width=width, anchor=anchor)
-            label.pack(side='left', padx=2)
+        self.tree.heading('delta', text='Δ Delta', anchor='center')
+        self.tree.column('delta', anchor='center', width=120, stretch=False)
 
-        self.labels = {}
-        self.coin_row_frames = {}  # Przechowuje wiersze każdego coina
-        self.current_display_row = 0
+        self.tree.heading('delta_pct', text='Δ %', anchor='center')
+        self.tree.column('delta_pct', anchor='center', width=90, stretch=False)
 
-        # Container na wszystkie dane
-        data_container = ttk.Frame(self.scrollable_frame)
-        data_container.pack(fill='x', pady=5, padx=5)
-        self.data_container = data_container
+        # Styl i kolorowanie tagów
+        self.tree.tag_configure('positive', foreground='#00ff41')
+        self.tree.tag_configure('negative', foreground='#ff2e63')
+        self.tree.tag_configure('neutral', foreground='#b0b0b0')
+        # Row background tags for alternating rows
+        style_bg_even = '#1b1b1b'
+        style_bg_odd = '#161616'
+        self.tree.tag_configure('even', background=style_bg_even)
+        self.tree.tag_configure('odd', background=style_bg_odd)
+        # Separator row (visual break between coin groups)
+        self.tree.tag_configure('sep', background='#0f0f0f')
 
-        # Inicjalizacja labels dla każdego coina (ale bez wyświetlania)
-        for coin in COINS:
-            self.labels[coin] = {}
-            self.coin_row_frames[coin] = []  # Lista wierszy dla tego coina
+        # Scrollbar dla tabeli
+        vsb = ttk.Scrollbar(table_frame, orient='vertical', command=self.tree.yview)
+        self.tree.configure(yscrollcommand=vsb.set)
+        self.tree.pack(side='left', fill='both', expand=True)
+        vsb.pack(side='right', fill='y')
+
+        # Mapa itemów w drzewie: self.tree_item_ids[coin][exchange] -> item_id
+        self.tree_item_ids = {coin: {} for coin in COINS}
 
     def toggle_coin_display(self, coin: str) -> None:
         """Przełącza wyświetlanie coina i monitorowanie 3 giełd"""
         if self.coin_vars[coin].get():
-            # Utwórz wiersze dla tego coina jeśli nie istnieją
-            if not self.coin_row_frames[coin]:
+            # Utwórz wiersze dla tego coina w drzewie jeśli jeszcze nie istnieją
+            if not self.tree_item_ids.get(coin) or len(self.tree_item_ids[coin]) == 0:
                 self._create_coin_rows(coin)
             self.visible_coins.add(coin)
             asyncio.run_coroutine_threadsafe(self.start_callback(coin), self.loop)
         else:
-            # Usuń wiersze tego coina z GUI
-            for row_widgets in self.coin_row_frames[coin]:
-                for widget in row_widgets:
-                    widget.grid_forget()
-            # Jeśli istnieje separator
-            if len(self.coin_row_frames[coin]) > 0:
-                pass  # Separatory usuniemy razem z wierszami
-            self.coin_row_frames[coin] = []
+            # Usuń wiersze tego coina z drzewa
+            for exchange, item_id in list(self.tree_item_ids.get(coin, {}).items()):
+                try:
+                    self.tree.delete(item_id)
+                except Exception:
+                    pass
+            self.tree_item_ids[coin] = {}
             self.visible_coins.discard(coin)
             asyncio.run_coroutine_threadsafe(self.stop_callback(coin), self.loop)
 
@@ -172,66 +181,25 @@ class CryptoMonitorGUI:
             "COMBINED": "📊"
         }
 
-        # Znaleź ostatni wiersz
-        all_children = self.data_container.grid_slaves()
-        last_row = 0
-        for widget in all_children:
-            grid_info = widget.grid_info()
-            if grid_info and 'row' in grid_info:
-                row = grid_info['row']
-                if row >= last_row:
-                    last_row = row + 1
-
-        insert_row = last_row
-
         for row_idx, exchange in enumerate(exchanges):
-            # Nazwa coina (tylko dla pierwszego wiersza)
             coin_display = coin if row_idx == 0 else ""
-            coin_label = tk.Label(self.data_container, text=coin_display, font=('Segoe UI', 9, 'bold'),
-                                 bg=self.bg_color, fg=self.accent_color, width=8, anchor='w')
-            coin_label.grid(row=insert_row + row_idx, column=0, padx=8, pady=4, sticky='w')
+            exchange_text = f"{exchange_emoji.get(exchange, '')} {exchange}"
+            idx = len(self.tree.get_children())
+            parity_tag = 'even' if idx % 2 == 0 else 'odd'
+            item = self.tree.insert('', 'end', values=(coin_display, exchange_text, '0.0', '0.0', '0.0', '0.0%'), tags=(parity_tag, 'neutral'))
+            self.tree_item_ids[coin][exchange] = item
 
-            # Exchange
-            exchange_label = tk.Label(self.data_container, text=f"{exchange_emoji.get(exchange, '')} {exchange}",
-                                     font=('Segoe UI', 9), bg=self.bg_color, fg="#00ffff", width=12, anchor='w')
-            exchange_label.grid(row=insert_row + row_idx, column=1, padx=8, pady=4, sticky='w')
-
-            # Volume
-            vol_label = tk.Label(self.data_container, text="0.0", font=('Segoe UI', 9),
-                                bg=self.bg_color, fg=self.fg_color, width=10, anchor='e')
-            vol_label.grid(row=insert_row + row_idx, column=2, padx=8, pady=4, sticky='e')
-
-            # Avg Volume
-            avg_label = tk.Label(self.data_container, text="0.0", font=('Segoe UI', 9),
-                                bg=self.bg_color, fg="#b0b0b0", width=10, anchor='e')
-            avg_label.grid(row=insert_row + row_idx, column=3, padx=8, pady=4, sticky='e')
-
-            # Delta
-            delta_label = tk.Label(self.data_container, text="0.0", font=('Segoe UI', 9, 'bold'),
-                                  bg=self.bg_color, fg=self.fg_color, width=10, anchor='e')
-            delta_label.grid(row=insert_row + row_idx, column=4, padx=8, pady=4, sticky='e')
-
-            # Delta %
-            delta_percent_label = tk.Label(self.data_container, text="0.0%", font=('Segoe UI', 9, 'bold'),
-                                          bg=self.bg_color, fg=self.fg_color, width=10, anchor='e')
-            delta_percent_label.grid(row=insert_row + row_idx, column=5, padx=8, pady=4, sticky='e')
-
-            self.labels[coin][exchange] = {
-                'volume': vol_label,
-                'avg_volume': avg_label,
-                'delta': delta_label,
-                'delta_percent': delta_percent_label
-            }
-
-            self.coin_row_frames[coin].append(
-                [coin_label, exchange_label, vol_label, avg_label, delta_label, delta_percent_label]
-            )
+        # Insert a thin separator row after the coin group to visually separate groups
+        sep_idx = len(self.tree.get_children())
+        sep_tag = 'even' if sep_idx % 2 == 0 else 'odd'
+        sep_item = self.tree.insert('', 'end', values=('', '', '', '', '', ''), tags=(sep_tag, 'sep'))
+        self.tree_item_ids[coin]['__sep__'] = sep_item
 
     def select_all_coins(self) -> None:
         """Zaznacza wszystkie coiny"""
         for coin in COINS:
             self.coin_vars[coin].set(True)
-            if not self.coin_row_frames[coin]:
+            if not self.tree_item_ids.get(coin) or len(self.tree_item_ids[coin]) == 0:
                 self._create_coin_rows(coin)
             self.visible_coins.add(coin)
             asyncio.run_coroutine_threadsafe(self.start_callback(coin), self.loop)
@@ -240,10 +208,12 @@ class CryptoMonitorGUI:
         """Odznacza wszystkie coiny"""
         for coin in COINS:
             self.coin_vars[coin].set(False)
-            for row_widgets in self.coin_row_frames[coin]:
-                for widget in row_widgets:
-                    widget.grid_forget()
-            self.coin_row_frames[coin] = []
+            for exchange, item_id in list(self.tree_item_ids.get(coin, {}).items()):
+                try:
+                    self.tree.delete(item_id)
+                except Exception:
+                    pass
+            self.tree_item_ids[coin] = {}
             self.visible_coins.discard(coin)
             asyncio.run_coroutine_threadsafe(self.stop_callback(coin), self.loop)
 
@@ -294,18 +264,14 @@ class CryptoMonitorGUI:
             self._update_exchange_data(coin, "OKX", state_okx)
 
             # Update Combined
-            self.labels[coin]["COMBINED"]['volume'].config(
-                text=f"{state_combined['current_vol']:.1f}")
-            self.labels[coin]["COMBINED"]['avg_volume'].config(
-                text=f"{state_combined['avg_vol']:.1f}")
-            self._set_delta_color(
-                self.labels[coin]["COMBINED"]['delta'], state_combined['delta'])
-            self._set_delta_color(
-                self.labels[coin]["COMBINED"]['delta_percent'], combined_delta_percent)
-            self.labels[coin]["COMBINED"]['delta'].config(
-                text=f"{state_combined['delta']:+.1f}")
-            self.labels[coin]["COMBINED"]['delta_percent'].config(
-                text=f"{combined_delta_percent:+.1f}%")
+            combined_item = self.tree_item_ids[coin].get('COMBINED')
+            if combined_item:
+                tag = self._tag_for_value(state_combined['delta'])
+                self.tree.item(combined_item, values=(coin, 'COMBINED',
+                                                     f"{state_combined['current_vol']:.1f}",
+                                                     f"{state_combined['avg_vol']:.1f}",
+                                                     f"{state_combined['delta']:+.1f}",
+                                                     f"{combined_delta_percent:+.1f}%"), tags=(tag,))
 
         self.root.after(int(REFRESH_RATE * 1000), self.update_display)
 
@@ -313,24 +279,35 @@ class CryptoMonitorGUI:
         """Aktualizuje dane dla jednej giełdy"""
         total_vol = state["buy_vol"] + state["sell_vol"]
         delta_percent = (state["delta"] / total_vol * 100) if total_vol > 0 else 0
-
-        self.labels[coin][exchange]['volume'].config(text=f"{state['current_vol']:.1f}")
-        self.labels[coin][exchange]['avg_volume'].config(text=f"{state['avg_vol']:.1f}")
-
-        self._set_delta_color(self.labels[coin][exchange]['delta'], state['delta'])
-        self.labels[coin][exchange]['delta'].config(text=f"{state['delta']:+.1f}")
-
-        self._set_delta_color(
-            self.labels[coin][exchange]['delta_percent'], delta_percent)
-        self.labels[coin][exchange]['delta_percent'].config(
-            text=f"{delta_percent:+.1f}%")
+        item = self.tree_item_ids[coin].get(exchange)
+        if item:
+            # preserve parity tag (odd/even) and set value tag for coloring
+            existing_tags = list(self.tree.item(item, 'tags') or [])
+            parity_tag = next((t for t in existing_tags if t in ('odd', 'even')), None)
+            value_tag = self._tag_for_value(state['delta'])
+            new_tags = tuple(t for t in (parity_tag, value_tag) if t)
+            self.tree.item(item, values=(coin, exchange,
+                                         f"{state['current_vol']:.1f}",
+                                         f"{state['avg_vol']:.1f}",
+                                         f"{state['delta']:+.1f}",
+                                         f"{delta_percent:+.1f}%"), tags=new_tags)
 
     @staticmethod
     def _set_delta_color(label: tk.Label, value: float) -> None:
         """Ustawia kolor labela na podstawie wartości delty"""
+        # Deprecated for Treeview usage
         if value > 0:
-            label.config(fg="#00ff41")  # Jasna zieleń
+            label.config(fg="#00ff41")
         elif value < 0:
-            label.config(fg="#ff2e63")  # Jasna czerwień
+            label.config(fg="#ff2e63")
         else:
-            label.config(fg="#b0b0b0")  # Szary dla zera
+            label.config(fg="#b0b0b0")
+
+    @staticmethod
+    def _tag_for_value(value: float) -> str:
+        if value > 0:
+            return 'positive'
+        elif value < 0:
+            return 'negative'
+        else:
+            return 'neutral'
