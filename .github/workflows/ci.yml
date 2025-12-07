@@ -14,6 +14,9 @@ jobs:
       PYTHONPATH: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v4
+      - name: Debug environment
+        run: | 
+          echo '--- python info ---' && python -V || true && python -c "import sys, os; print('executable:', sys.executable); print('cwd:', os.getcwd()); print('\n'.join(sys.path))" && echo '--- repo listing ---' && ls -la || true && echo '--- tree (1) ---' && find . -maxdepth 2 -print || true
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
