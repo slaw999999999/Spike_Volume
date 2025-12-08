@@ -4,14 +4,16 @@ Konfiguracja globalna - parametry, URL, tokeny, lista coinów
 
 import os
 from collections import deque
+from dotenv import load_dotenv
+
+# Load environment variables early
+load_dotenv()  # Ładuje zmienne z .env
 
 # ========= PARAMETRY SYSTEMU ==========
 HISTORY = 5  # Liczba świec do historii
 REFRESH_RATE = 0.5  # Częstotliwość odświeżania GUI (sekundy)
 
 # ========= TELEGRAM ==========
-from dotenv import load_dotenv
-load_dotenv()  # Ładuje zmienne z .env
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
