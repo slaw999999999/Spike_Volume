@@ -57,8 +57,6 @@ python main.py
 
 Po uruchomieniu powinno pojawić się okno GUI. Zaznacz coiny w panelu "Wybierz Coiny do Wyświetlania", żeby rozpocząć monitorowanie. Alerty na Telegram będą wysyłane automatycznie przy spełnieniu warunków (jeśli `.env` zawiera poprawne dane).
 
-Jeśli wolisz uruchomić projekt w kontenerze, mogę przygotować `Dockerfile` i `docker-compose` na życzenie.
-
 
 ## Konfiguracja
 
