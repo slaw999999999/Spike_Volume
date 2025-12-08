@@ -9,7 +9,7 @@ import websockets
 
 from config import (
     COINS, BINANCE_WS_URL, BYBIT_WS_URL, GATE_WS_URL, OKX_WS_URL,
-    TF_BINANCE, TF_BYBIT, HISTORY
+    TF_BINANCE, TF_BYBIT
 )
 from alerts import check_binance_alert
 
