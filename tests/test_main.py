@@ -1,12 +1,12 @@
 import asyncio
 
 
-def _make_dummy_coro():
-    async def _dummy(*args, **kwargs):
+def _make_long_sleep_coro():
+    async def _long_sleep(*args, **kwargs):
         # long sleep so task remains pending until cancelled
         await asyncio.sleep(10)
 
-    return _dummy
+    return _long_sleep
 
 
 def test_start_and_stop_other_exchanges():
@@ -21,13 +21,13 @@ def test_start_and_stop_other_exchanges():
         del importlib.sys.modules['main']
     import main
 
-    # Prepare dummy coroutine factories and patch functions on the main module
-    dummy = _make_dummy_coro()
+    # Prepare coroutine factories and patch functions on the main module
+    coro_factory = _make_long_sleep_coro()
 
-    main.kline_task_bybit = lambda coin, states, active: dummy()
-    main.trade_task_bybit = lambda coin, states, active: dummy()
-    main.trades_task_gate = lambda coin, states, active: dummy()
-    main.trade_task_okx = lambda coin, states, active: dummy()
+    main.kline_task_bybit = lambda coin, states, active: coro_factory()
+    main.trade_task_bybit = lambda coin, states, active: coro_factory()
+    main.trades_task_gate = lambda coin, states, active: coro_factory()
+    main.trade_task_okx = lambda coin, states, active: coro_factory()
 
     # Ensure clean state
     main.other_exchange_tasks.clear()
