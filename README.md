@@ -87,6 +87,13 @@ Lub edytuj `config.py` i zamień wartości domyślne.
 python main.py
 ```
 
+## Testowy GUI (.exe)
+
+W repo znajduje się oddzielny folder z uproszczoną wersją GUI bez alertów Telegram: [gui_no_telegram_exe](gui_no_telegram_exe/).
+Po zbudowaniu pliku exe wynik trafia do `gui_no_telegram_exe/dist/SpikeVolumeTest.exe`.
+
+UWAGA: plik `.exe` jest do celów testowych — jeśli chcesz używać go produkcyjnie, rozważ podpisanie binarki i sprawdzenie zależności systemowych.
+
 GUI pojawi się z pustym ekranem. Zaznacz coiny w panelu "Wybierz Coiny do Wyświetlania" aby zobaczyć dane i uruchomić monitoring 3 dodatkowych giełd dla każdego coina.
 
 ## Struktura Kodu
